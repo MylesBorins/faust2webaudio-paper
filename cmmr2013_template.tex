@@ -32,10 +32,10 @@
 \mainmatter  % start of an individual contribution
 
 % first the title is needed
-\title{From Faust to Flocking: Declarative Control of the Faust Synthesis Language in the Browser.}
+\title{From Faust to WebAudio: Compiling Faust to JavaScript using Emscripten to make noise in the browser.}
 
 % a short form should be given in case it is too long for the running head
-\titlerunning{From Faust to Flocking}
+\titlerunning{From Faust to WebAudio}
 
 % the name(s) of the author(s) follow(s) next
 %
@@ -43,7 +43,7 @@
 % their surnames. This ensures that the names appear correctly in
 % the running heads and the author index.
 %
-\author{Myles Borins\inst{1} \thanks{Julius O. Smith, Yann Orley, and Colin Clark}}
+\author{Myles Borins \thanks{Julius O. Smith, Stéphane Letz, Yann Orley, and Colin Clark}}
 %
 % if the names of the authors are too long for the running head, please use the format: AuthorA et al.
 \authorrunning{Myles Borins}
@@ -67,20 +67,31 @@
 % The abstract should summarize the contents of the paper and should
 % contain at least 70 and at most 150 words. It should be written using the
 % \emph{abstract} environment.
-The Flocking audio synthesis toolkit, developed by Colin Clark, offers a unique declarative model for doing signal processing within the browser.  It's JSON-based syntax combined with the interpreted nature of the JavaScript language make it an ideal candidate for creating interactive sound synthesis environments.  At the current time the toolkit has very few unit generators when compared to more traditional environments.  The Faust project, developed at Grame CNCM, offers a unique solution to this problem.  Faust consists of both a language and a compiler, allowing individuals to deploy a signal processor to various industry standard environments (max/msp, supercollider) and formats (vst, au, jack).  This paper examines a technology stack that allows for Faust to be compiled to highly optimized Flocking unit generators that synthesize sound using the web audio api.  
+The WebAudio API is a platform for doing audio synthesis in the browser.  Currently it has a number of natively compiled audio nodes capable of doing fairly advanced synthesis.  One of the available node the "JavaScriptNode" allows individuals the ability to create their own custom unit generators in pure JavaScript. While a number of people have been writing custom nodes, they are rewriting code that has been perfected multiple times in various languages. The Faust project, developed at Grame CNCM, offers a unique solution to this problem.  Faust consists of both a language and a compiler, allowing individuals to deploy a signal processor to various architectures including Max/MSP, supercollider, and core-audio.  This paper examines a technology stack that allows for Faust to be compiled to highly optimized JavaScript unit generators that synthesize sound using the web audio api.  
 
 
-\keywords{Faust, Flocking, JavaScript, asm.js, emscripten}
+\keywords{Faust, Flocking, WAAX, JavaScript, asm.js, emscripten}
 \end{abstract}
 
 
 \section{Introduction}
 
-The Flocking audio synthesis toolkit offers a unique declarative model for doing signal processing within the browser.  It's JSON-based syntax combined with the interpreted nature of the JavaScript language make it an ideal candidate for creating interactive sound synthesis environments.\footnote{\url{http://flockingjs.org/}} The toolkit is built on top of the Web Audio Api\footnote{\url{https://dvcs.w3.org/hg/audio/raw-file/tip/webaudio/specification.html}} offering support out of the box on almost every web-capable device.  Deploying to the browser also enables one to leverage a wide variety of web technologies ranging from User Interface components to large scale development frameworks. 
+The WebAudio API, released in 2011, is "a high-level JavaScript API for processing and synthesizing audio in web applications."\footnote{\url{https://dvcs.w3.org/hg/audio/raw-file/tip/webaudio/specification.html}}  Currently there are a number of natively compiled audio nodes within the API capable of doing fairly advanced synthesis. One of the available node the "JavaScriptNode" allows individuals the ability to create their own custom unit generators in pure JavaScript. 
 
 While the concept of making interactive sound synthesis environments in the browser is quite exciting, there are two primary factors stopping individuals from investing time into the web audio platform; There has not yet been enough Signal Processing related JavaScript code written yet, and some signal processing concepts prove difficult to implement efficiently in a loosely typed language with no memory management.
 
-The Faust project offers a unique solution to the first problem; rather than write code, generate it.  Faust, developed at Grame CNCM,"is a programming language that provides a purely functional approach to signal processing while offering a high level of performance." \cite{orlarey:09c}  The project is both a language and a compiler, offering the ability to write code once and deploy to many different signal processing environments.
+\subsection{WAAX and Flocking}
+
+There are a number of projects that are in development abstracting over top of the WebAudio API in order to extend its capabilities by creating more complicated unit generators and a more intuitive syntax.  Projects such as WAAX (Web Audio API eXtension)\footnote{\url{https://github.com/hoch/waax}} by Hongchan Choi use the native nodes only in order to ensure optimum efficiency.\cite{waax}
+
+The Flocking audio synthesis toolkit\footnote{\url{http://flockingjs.org/}} by Colin Clark offers a unique declarative model for doing signal processing within the browser.  Unlike WAAX, Flocking has opted to use the "JavaScriptNode" for all unit generators giving users access to a number of signal processing algorithms that can not be achieved using only native nodes.
+
+WAAX and Flocking offer individuals two very different approaches to web audio. WAAX offers efficiency, whereas Flocking offers bleeding edge unit generators.  That being said both projects suffer from the same problem, a lack of man hours.  There are only so many individuals who have the time and domain specific knowledge necessary to write new unit generators.
+
+\subsection{Faust}
+The Faust project offers a unique solution to this problem; rather than write code, generate it.  Faust, developed at Grame CNCM,"is a programming language that provides a purely functional approach to signal processing while offering a high level of performance." \cite{orlarey:09c}  The project is both a language and a compiler, offering the ability to write code once and deploy to many different signal processing environments.
+
+
 
 This section will continue to describe the current state of Faust -> Web audio compilation, specifically the problems with the current process which is inline with the above mentioned problems (efficiency, language limitations).  It will then introduce Emscripten\footnote{\url{https://github.com/kripken/emscripten}} a cross compiling tool designed to compile C/C++ into efficient asm.js code.  Asm.js \footnote{\url{http://asmjs.org/}} will also be introduced as a subset of javascript that "provides a model closer to C/C++ by eliminating dynamic type guards, boxed values, and garbage collection."\cite{asm-js}.
 
@@ -138,17 +149,32 @@ Talk about How other web based frameworks can bootstrap on this idea in order to
 
 Finally discuss a conclusion about findings of the project
 
+\section{Code Repository}
+
+The entire source code can be found online on GitHub at:
+\\
+\url{https://github.com/TheAlphaNerd/faust2webaudio}
+
 \begin{thebibliography}{1}
 	
-	\bibitem{orlarey:09c}
-	Y.~Orlarey, D.~Fober, and S.~Letz.
-	\newblock {\em FAUST : an Efficient Functional Approach to DSP Programming},
-	  page 65–96.
-	\newblock 2009.
+    % \bibitem{orlarey:09c}
+    % Y.~Orlarey, D.~Fober, and S.~Letz.
+    %      \textsl{New Computational Paradigms for Computer Music},
+    % \newblock 2009.
+
+    \bibitem{waax}
+    H.~Choi, J.Berger., ``WAAX: Web Audio API eXtension"
+    \emph{Proceedings of the Thirteenth New Interfaces for Musical Expression Conference}, 2013.
+    
 	
+    \bibitem{orlarey:09c} Y.~Orlarey, D.~Fober, and S.~Letz., ``FAUST : an Efficient Functional Approach to DSP Programming,"
+    \emph{New Computational Paradigms for Computer Music}, pp. 65-96, Editions DELATOUR FRANCE, 2009.
+
 	\bibitem{asm-js}
-	asm.js - frequently asked questions.
-	\newblock http://asmjs.org/faq.html.
+	\textsl{asm.js - frequently asked questions.}
+    \newblock \url{http://asmjs.org/faq.html.}
+    
+    
 	
 \end{thebibliography}
 
